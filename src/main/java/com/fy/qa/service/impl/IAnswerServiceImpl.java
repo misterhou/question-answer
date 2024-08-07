@@ -24,6 +24,7 @@ public class IAnswerServiceImpl implements IAnswerService {
             answer = this.longShineClient.inventoryAmount(question);
         } catch (ParamParserException e) {
             log.error("参数解析错误", e);
+            answer = "对不起，" + e.getMessage();
         }
         if (null == answer) {
             answer = "对不起，未查询到对应的答案";

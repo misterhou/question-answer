@@ -1,5 +1,6 @@
 package com.fy.qa.ws.client;
 
+import com.fy.qa.DataCache;
 import com.fy.qa.exception.ParamParserException;
 import com.fy.utils.JsonUtils;
 import com.fy.utils.StringUtils;
@@ -69,18 +70,18 @@ public class LongShineClient {
      * @throws ParamParserException
      */
     public String inventoryAmount(String question) throws ParamParserException {
-        String orgName = null;
-        String startStr = "截止到当前时间";
-        String endStr = "库存金额是多少";
-//        String input = "截止到当前时间石家庄库存金额是多少";
-        String regex = startStr + ".*?" + endStr;
-        Pattern pattern = Pattern.compile(regex);
-        Matcher matcher = pattern.matcher(question);
-        if (matcher.matches()) {
-            orgName = question.replace(startStr, "").replace(endStr, "");
-        }
+        String orgName = DataCache.getCity(question);
+//        String startStr = "截止到当前时间";
+//        String endStr = "库存金额是多少";
+////        String input = "截止到当前时间石家庄库存金额是多少";
+//        String regex = startStr + ".*?" + endStr;
+//        Pattern pattern = Pattern.compile(regex);
+//        Matcher matcher = pattern.matcher(question);
+//        if (matcher.matches()) {
+//            orgName = question.replace(startStr, "").replace(endStr, "");
+//        }
         if (StringUtils.isEmpty(orgName)) {
-            throw new ParamParserException(question, null);
+            throw new ParamParserException(question, null, "请在问题描述中增加库存所属地区信息");
         }
         String result = null;
         if (StringUtils.hasText(orgName)) {

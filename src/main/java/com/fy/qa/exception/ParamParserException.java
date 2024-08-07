@@ -17,7 +17,8 @@ public class ParamParserException extends Exception {
      */
     private List<String> params;
 
-    public ParamParserException(String question, List<String> params) {
+    public ParamParserException(String question, List<String> params, String message) {
+        super(message);
         this.question = question;
         this.params = params;
     }
