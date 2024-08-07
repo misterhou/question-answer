@@ -1,0 +1,12 @@
+server:
+  port: 9000
+logging:
+  file:
+    name: ./logs/qa.log
+fy:
+  lx:
+    service-url: http://localhost:9000/sysadmin-iscmserving/services/iscm-serving
+    warehouse-data-file: E:/monkey/question_answer/WarehouseDataCache
+    material-data-file: E:/monkey/question_answer/MaterialDataCache
+cxf:
+  path: /sysadmin-iscmserving/services
