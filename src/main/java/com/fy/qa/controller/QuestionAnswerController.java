@@ -36,6 +36,7 @@ public class QuestionAnswerController {
 
     @GetMapping("/answer")
     public String getAnswer(String question) {
+
 //        String warehouseCode = DataCache.getWarehouseCode(question);
 //        String materialCode = DataCache.getMaterialCode(question);
 //        String answer = "答案是：warehouseCode：" + warehouseCode + ", materialCode：" + materialCode;
