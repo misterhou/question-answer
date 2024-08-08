@@ -21,13 +21,16 @@ public class IAnswerServiceImpl implements IAnswerService {
         // 截至到当前时间XX地区（或市县或全省）库存金额是多少
         String answer = null;
         try {
-            answer = this.longShineClient.inventoryAmount(question);
+            if (question.contains("库存金额") ||
+                    (question.contains("库存") && (question.contains("钱") || question.contains("金额")))) {
+                answer = this.longShineClient.inventoryAmount(question);
+            }
         } catch (ParamParserException e) {
             log.error("参数解析错误", e);
             answer = "对不起，" + e.getMessage();
         }
         if (null == answer) {
-            answer = "对不起，未查询到对应的答案";
+            answer = "对不起，系统暂时不支持此问题，请联系系统管理员。";
         }
         return answer;
     }

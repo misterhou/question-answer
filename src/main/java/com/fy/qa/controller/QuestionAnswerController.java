@@ -1,12 +1,9 @@
 package com.fy.qa.controller;
 
-import com.fy.qa.DataCache;
 import com.fy.qa.service.IAnswerService;
 import com.fy.qa.ws.client.LongShineClient;
 import com.fy.qa.ws.client.LongShineCode;
 import lombok.extern.slf4j.Slf4j;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -19,15 +16,15 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 @RestController
-@RequestMapping("/lx")
+@RequestMapping("/qa")
 @Slf4j
-public class LongShineController {
+public class QuestionAnswerController {
 
     private LongShineClient longShineClient;
 
     private IAnswerService answerService;
 
-    public LongShineController(LongShineClient longShineClient, IAnswerService answerService) {
+    public QuestionAnswerController(LongShineClient longShineClient, IAnswerService answerService) {
         this.longShineClient = longShineClient;
         this.answerService = answerService;
     }
@@ -39,8 +36,8 @@ public class LongShineController {
 
     @GetMapping("/answer")
     public String getAnswer(String question) {
-        String warehouseCode = DataCache.getWarehouseCode(question);
-        String materialCode = DataCache.getMaterialCode(question);
+//        String warehouseCode = DataCache.getWarehouseCode(question);
+//        String materialCode = DataCache.getMaterialCode(question);
 //        String answer = "答案是：warehouseCode：" + warehouseCode + ", materialCode：" + materialCode;
         String answer = this.answerService.getAnswer(question);
         return answer;
