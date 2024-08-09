@@ -103,12 +103,15 @@ public class DataCache {
         String monthRegex = "(0?[1-9]|1[0-2])月份";
         String beforeMonthRegex = "(上一个月|上月)";
         String afterMonthRegex = "(下一个月|下月)";
-        String singleYearRegex = "\\d{4}年";
+        String singleYearRegex = "(\\d{4}|\\d{2})年";
         if (StringUtils.regexIsFind(currentYearRegex, message) || StringUtils.regexIsFind(singleYearRegex, message)) {
             int year = now.getYear();
             List<String> yearRegexValue = getRegexValue(singleYearRegex, message);
             if (!ObjectUtils.isEmpty(yearRegexValue)) {
                 String yearStr = yearRegexValue.get(0);
+                if (yearStr.length() == 3) {
+                    yearStr = "20" + yearStr;
+                }
                 year = Integer.valueOf(yearStr.replaceAll("年", ""));
             }
             String startDate = year + "-01-01";
