@@ -36,6 +36,11 @@ public class LongShineClient {
      */
     private static final String BILL_SIGN_SERVICE_WSDL = "/BillSignServiceImpl?wsdl";
 
+    /**
+     * 预警生成情况
+     */
+    private static final String WARING_INFO_SERVICE_WSDL = "/WarningInfoServiceImpl?wsdl";
+
     private static final String NEW_EGY_SERVER_SERVICE = "/NewEgyServerService?wsdl";
 
     @Value("${fy.lx.service-url}")
@@ -157,23 +162,7 @@ public class LongShineClient {
      */
     public String billSign(String question) throws ParamParserException {
         String result = null;
-        String orgName = DataCache.getCity(question);
-        if (StringUtils.isEmpty(orgName)) {
-            throw new ParamParserException("请在问题描述中增加地区信息", question);
-        }
-        List<String> monthStr = DataCache.getMonthString(question);
-        String startDate = monthStr.get(0);
-        String endDate = monthStr.get(monthStr.size()-1);
-        Document document = DocumentHelper.createDocument();
-        Element root = document.addElement("ROOT");
-        Element item = root.addElement("ITEM");
-        Element orgNameElement = item.addElement("ORGNAME");
-        orgNameElement.setText(orgName);
-        Element starTime = item.addElement("STARTIME");
-        starTime.setText(startDate);
-        Element endTime = item.addElement("ENDTIME");
-        endTime.setText(endDate);
-        String params = root.asXML();
+        String params = getOrgNameAndStartTimeAndEndTime(question);
         String wsdlUrl = this.serviceUrl + BILL_SIGN_SERVICE_WSDL;
         QName operation = new QName("http://service.inventoryinquiry.api.serving.iscm.ls.com/", "ZMMWTK01_DJTJ_002");
         Element rootElement = this.getResponse(wsdlUrl, operation, params);
@@ -201,6 +190,71 @@ public class LongShineClient {
             result = content.toString();
         }
         return result;
+    }
+
+    /**
+     * 预警生成情况
+     * @param question 问题
+     * @return 答案
+     * @throws ParamParserException 当参数解析出错时会抛出此异常
+     */
+    public String waringInfo(String question) throws ParamParserException {
+        String result = "您好，2024年全省生成XX条预警信息，其中红色告警XX条，黄色预警XX条，蓝色提醒XX条。";
+        String params = getOrgNameAndStartTimeAndEndTime(question);
+        String wsdlUrl = this.serviceUrl + WARING_INFO_SERVICE_WSDL;
+        QName operation = new QName("http://service.inventoryinquiry.api.serving.iscm.ls.com/", "ZMMWTK01_YJTJ_003");
+        Element rootElement = this.getResponse(wsdlUrl, operation, params);
+        if (null != rootElement) {
+            StringBuilder content = new StringBuilder();
+            content.append("您好，");
+            Element head = rootElement.element("HEAD");
+            Element orgName = head.element("ORGNAME");
+            content.append(this.getElementTextTrim(orgName));
+            Element warnHzSum = head.element("WARNHZSUM");
+            content.append("生成").append(this.getElementTextTrim(warnHzSum)).append("预警信息");
+            List<Element> itemList = rootElement.elements("ITEM");
+            if (!ObjectUtils.isEmpty(itemList)) {
+                List<String> subItem = new ArrayList<>();
+                for (Element item : itemList) {
+                    Element warnLevel = item.element("WARNLEVEL");
+                    Element warnSum = item.element("WARNSUM");
+                    subItem.add(this.getElementTextTrim(warnLevel) + this.getElementTextTrim(warnSum));
+                }
+                content.append("，其中").append(String.join("，", subItem));
+            }
+            result = content.toString();
+        }
+        return result;
+    }
+
+    /**
+     * 获取地区、开始日期、结束日期 参数
+     * @param question 问题
+     * @return 参数数据（XML格式）
+     * @throws ParamParserException 当参数解析出错时会抛出此异常
+     */
+    private static String getOrgNameAndStartTimeAndEndTime(String question) throws ParamParserException {
+        String orgName = DataCache.getCity(question);
+        if (StringUtils.isEmpty(orgName)) {
+            throw new ParamParserException("请在问题描述中增加地区信息", question);
+        }
+        List<String> monthStr = DataCache.getMonthString(question);
+        if (ObjectUtils.isEmpty(monthStr)) {
+            throw new ParamParserException("请在问题描述中增加时间信息", question);
+        }
+        String startDate = monthStr.get(0);
+        String endDate = monthStr.get(monthStr.size()-1);
+        Document document = DocumentHelper.createDocument();
+        Element root = document.addElement("ROOT");
+        Element item = root.addElement("ITEM");
+        Element orgNameElement = item.addElement("ORGNAME");
+        orgNameElement.setText(orgName);
+        Element starTime = item.addElement("STARTIME");
+        starTime.setText(startDate);
+        Element endTime = item.addElement("ENDTIME");
+        endTime.setText(endDate);
+        String params = root.asXML();
+        return params;
     }
 
     /**

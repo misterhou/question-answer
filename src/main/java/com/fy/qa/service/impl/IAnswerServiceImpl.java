@@ -26,6 +26,8 @@ public class IAnswerServiceImpl implements IAnswerService {
                 answer = this.longShineClient.inventoryAmount(question);
             } else if (question.contains("单据签署")) {
                 answer = this.longShineClient.billSign(question);
+            } else if (question.contains("预警生成")) {
+                answer = this.longShineClient.waringInfo(question);
             }
         } catch (ParamParserException e) {
             log.error("参数解析错误", e);

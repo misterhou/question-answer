@@ -3,6 +3,7 @@ package com.fy.qa.ws.config;
 import com.fy.qa.ws.imitate.impl.BillSignServiceImpl;
 import com.fy.qa.ws.imitate.impl.INewEgyServerServiceImpl;
 import com.fy.qa.ws.imitate.impl.InventoryInquiryServiceImpl;
+import com.fy.qa.ws.imitate.impl.WarningInfoServiceImpl;
 import org.apache.cxf.Bus;
 import org.apache.cxf.jaxws.EndpointImpl;
 import org.springframework.context.annotation.Bean;
@@ -30,6 +31,13 @@ public class CXFConfiguration {
     public Endpoint endpointBillSignService(Bus bus) {
         EndpointImpl endpoint = new EndpointImpl(bus, new BillSignServiceImpl());
         endpoint.publish("/iscm-serving/BillSignServiceImpl");
+        return endpoint;
+    }
+
+    @Bean
+    public Endpoint endpointWarningInfoService(Bus bus) {
+        EndpointImpl endpoint = new EndpointImpl(bus, new WarningInfoServiceImpl());
+        endpoint.publish("/iscm-serving/WarningInfoServiceImpl");
         return endpoint;
     }
 }
