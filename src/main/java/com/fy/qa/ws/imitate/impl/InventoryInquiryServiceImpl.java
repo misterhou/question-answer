@@ -6,7 +6,7 @@ import org.springframework.stereotype.Component;
 @Component
 public class InventoryInquiryServiceImpl implements InventoryInquiryService {
     @Override
-    public String ZMMWTK01_SSKC_001(String orgName) {
+    public String ZMMWTK01_SSKC_001(String params) {
         String result = "<![CDATA[" +
                 "<?xml version=\"1.0\" encoding=\"utf-8\" ?>\n" +
                 "<ROOT>\n" +

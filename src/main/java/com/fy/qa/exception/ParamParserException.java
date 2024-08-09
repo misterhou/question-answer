@@ -12,14 +12,8 @@ public class ParamParserException extends Exception {
      */
     private String question;
 
-    /**
-     * 解析到的参数
-     */
-    private List<String> params;
-
-    public ParamParserException(String question, List<String> params, String message) {
+    public ParamParserException(String message, String question) {
         super(message);
         this.question = question;
-        this.params = params;
     }
 }

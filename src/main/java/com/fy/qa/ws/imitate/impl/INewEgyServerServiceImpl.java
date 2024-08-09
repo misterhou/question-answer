@@ -1,13 +1,13 @@
-package com.fy.qa.ws.impl;
+package com.fy.qa.ws.imitate.impl;
 
-import com.fy.qa.ws.ImitateWebService;
+import com.fy.qa.ws.imitate.INewEgyServerService;
 import org.springframework.stereotype.Component;
 
 import javax.jws.WebService;
 
 @Component
 @WebService(serviceName = "INewEgyServerServiceService", targetNamespace = "http://webService.com/")
-public class ImitateWebServiceImpl implements ImitateWebService {
+public class INewEgyServerServiceImpl implements INewEgyServerService {
 
 
     @Override

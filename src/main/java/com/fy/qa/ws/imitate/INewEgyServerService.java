@@ -1,4 +1,4 @@
-package com.fy.qa.ws;
+package com.fy.qa.ws.imitate;
 
 import javax.jws.WebMethod;
 import javax.jws.WebParam;
@@ -8,7 +8,7 @@ import javax.jws.soap.SOAPBinding;
 
 @WebService(serviceName = "INewEgyServerServiceService", targetNamespace = "http://webService.com/")
 @SOAPBinding(style = SOAPBinding.Style.RPC)
-public interface ImitateWebService {
+public interface INewEgyServerService {
 
     @WebMethod
     @WebResult String smartApiMethod(@WebParam(name = "code") String code, @WebParam(name = "infoString") String infoString);

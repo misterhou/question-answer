@@ -20,11 +20,12 @@ public class IAnswerServiceImpl implements IAnswerService {
     public String getAnswer(String question) {
         // 截至到当前时间XX地区（或市县或全省）库存金额是多少
         String answer = null;
-
         try {
             if (question.contains("库存金额") ||
                     (question.contains("库存") && (question.contains("钱") || question.contains("金额")))) {
                 answer = this.longShineClient.inventoryAmount(question);
+            } else if (question.contains("单据签署")) {
+                answer = this.longShineClient.billSign(question);
             }
         } catch (ParamParserException e) {
             log.error("参数解析错误", e);

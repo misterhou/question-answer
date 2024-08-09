@@ -11,5 +11,5 @@ import javax.jws.soap.SOAPBinding;
 public interface InventoryInquiryService {
 
     @WebMethod
-    @WebResult String ZMMWTK01_SSKC_001(String orgName);
+    @WebResult String ZMMWTK01_SSKC_001(String params);
 }

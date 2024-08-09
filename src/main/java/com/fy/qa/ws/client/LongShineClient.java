@@ -13,15 +13,13 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
+import org.springframework.util.ObjectUtils;
 
 import javax.xml.namespace.QName;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
-import java.util.stream.Collectors;
 
 @Component
 public class LongShineClient {
@@ -32,6 +30,11 @@ public class LongShineClient {
      * 查询库存金额
      */
     private static final String INVENTORY_INQUIRY_SERVICE_WSDL = "/InventoryInquiryServiceImpl?wsdl";
+
+    /**
+     * 单据签署
+     */
+    private static final String BILL_SIGN_SERVICE_WSDL = "/BillSignServiceImpl?wsdl";
 
     private static final String NEW_EGY_SERVER_SERVICE = "/NewEgyServerService?wsdl";
 
@@ -81,7 +84,7 @@ public class LongShineClient {
 //            orgName = question.replace(startStr, "").replace(endStr, "");
 //        }
         if (StringUtils.isEmpty(orgName)) {
-            throw new ParamParserException(question, null, "请在问题描述中增加库存所属地区信息");
+            throw new ParamParserException("请在问题描述中增加地区信息", question);
         }
         String result = null;
         if (StringUtils.hasText(orgName)) {
@@ -93,46 +96,47 @@ public class LongShineClient {
             orgNameElement.setText(orgName);
             String params = root.asXML();
             try {
-                log.info("朗新服务地址：{}", wsdlUrl);
-                log.info("请求数据：：{}", params);
-                Client client = this.getClient(wsdlUrl);
                 QName operation = new QName("http://service.inventoryinquiry.api.serving.iscm.ls.com/", "ZMMWTK01_SSKC_001");
-                Object[] objects = client.invoke(operation, params);
-                Object object = objects[0];
-                log.info("响应数据: " + object);
-                if (null != object) {
-                    String resResult = object.toString();
-                    if (resResult.contains("<![CDATA[")) {
-                        resResult = resResult.replaceAll("<!\\[CDATA\\[", "").replaceAll("\\]\\]>", "");
+                Element resRootElement = this.getResponse(wsdlUrl, operation, params);
+//                log.info("朗新服务地址：{}", wsdlUrl);
+//                log.info("请求数据：：{}", params);
+//                Client client = this.getClient(wsdlUrl);
+//                Object[] objects = client.invoke(operation, params);
+//                Object object = objects[0];
+//                log.info("响应数据: " + object);
+//                if (null != object) {
+//                    String resResult = object.toString();
+//                    if (resResult.contains("<![CDATA[")) {
+//                        resResult = resResult.replaceAll("<!\\[CDATA\\[", "").replaceAll("\\]\\]>", "");
+//                    }
+//                Document resDocument = DocumentHelper.parseText(resResult);
+//                Element resRootElement = resDocument.getRootElement();
+                List<String> subContent = new ArrayList<>();
+                BigDecimal total = new BigDecimal(0);
+                for (Element resItem : resRootElement.elements()) {
+                    StringBuilder content = new StringBuilder();
+                    String resOrgName = this.getElementTextTrim(resItem.element("ORGNAME"));
+                    content.append(resOrgName);
+                    String resKcType = this.getElementTextTrim(resItem.element("KCTYPE"));
+                    content.append(resKcType);
+                    String kcAmount = this.getElementTextTrim(resItem.element("DMBTR"));
+                    content.append(kcAmount);
+                    subContent.add(content.toString());
+                    if (StringUtils.hasText(kcAmount)) {
+                        total = total.add(new BigDecimal(kcAmount.replaceAll("万元", "")));
                     }
-                    Document resDocument = DocumentHelper.parseText(resResult);
-                    Element resRootElement = resDocument.getRootElement();
-                    List<String> subContent = new ArrayList<>();
-                    BigDecimal total = new BigDecimal(0);
-                    for (Element resItem : resRootElement.elements()) {
-                        StringBuilder content = new StringBuilder();
-                        String resOrgName = this.getElementTextTrim(resItem.element("ORGNAME"));
-                        content.append(resOrgName);
-                        String resKcType = this.getElementTextTrim(resItem.element("KCTYPE"));
-                        content.append(resKcType);
-                        String kcAmount = this.getElementTextTrim(resItem.element("DMBTR"));
-                        content.append(kcAmount);
-                        subContent.add(content.toString());
-                        if (StringUtils.hasText(kcAmount)) {
-                            total = total.add(new BigDecimal(kcAmount.replaceAll("万元", "")));
-                        }
-                    }
-                    String totalAmount = "";
-                    BigDecimal temp = total.divide(new BigDecimal(10000), 2, BigDecimal.ROUND_HALF_UP);
-                    if (temp.doubleValue() > 1) {
-                        totalAmount = temp + "亿元";
-                    } else {
-                        totalAmount = total + "万元";
-                    }
-                    result = "您好，截至当前时间" + orgName + "库存为" + totalAmount + "，其中" + String.join("，", subContent);
                 }
+                String totalAmount = "";
+                BigDecimal temp = total.divide(new BigDecimal(10000), 2, BigDecimal.ROUND_HALF_UP);
+                if (temp.doubleValue() > 1) {
+                    totalAmount = temp + "亿元";
+                } else {
+                    totalAmount = total + "万元";
+                }
+                result = "您好，截至当前时间" + orgName + "库存为" + totalAmount + "，其中" + String.join("，", subContent);
+//                }
             } catch (Exception e) {
-                log.error("调用朗新服务异常", e);
+                log.error("解析响应数据错误", e);
             }
         } else {
             log.warn("问题参数解析");
@@ -141,6 +145,77 @@ public class LongShineClient {
     }
 
 
+    public String billSign(String question) throws ParamParserException {
+        String result = null;
+        String orgName = DataCache.getCity(question);
+        if (StringUtils.isEmpty(orgName)) {
+            throw new ParamParserException("请在问题描述中增加地区信息", question);
+        }
+        List<String> monthStr = DataCache.getMonthString(question);
+        String startDate = monthStr.get(0);
+        String endDate = monthStr.get(monthStr.size()-1);
+        Document document = DocumentHelper.createDocument();
+        Element root = document.addElement("ROOT");
+        Element item = root.addElement("ITEM");
+        Element orgNameElement = item.addElement("ORGNAME");
+        orgNameElement.setText(orgName);
+        Element starTime = item.addElement("STARTIME");
+        starTime.setText(startDate);
+        Element endTime = item.addElement("ENDTIME");
+        endTime.setText(endDate);
+        String params = root.asXML();
+        String wsdlUrl = this.serviceUrl + BILL_SIGN_SERVICE_WSDL;
+        QName operation = new QName("http://service.inventoryinquiry.api.serving.iscm.ls.com/", "ZMMWTK01_DJTJ_002");
+        Element rootElement = this.getResponse(wsdlUrl, operation, params);
+        if (null != rootElement) {
+            StringBuilder content = new StringBuilder();
+            Element head = rootElement.element("HEAD");
+            Element resOrgName = head.element("ORGNAME");
+            content.append("您好，").append(this.getElementTextTrim(resOrgName));
+            Element scBillSum = head.element("SCBILLSUM");
+            content.append("共生成").append(this.getElementTextTrim(scBillSum));
+            Element qsBillSum = head.element("QSBILLSUM");
+            content.append("，已完成签署").append(this.getElementTextTrim(qsBillSum));
+            List<Element> itemList = rootElement.elements("ITEM");
+            if (!ObjectUtils.isEmpty(itemList)) {
+                List<String> subItemList = new ArrayList<>();
+                for (Element element : itemList) {
+                    Element billType = element.element("BILLTYPE");
+                    Element billSum = element.element("BILLSUM");
+                    subItemList.add(this.getElementTextTrim(billType) + this.getElementTextTrim(billSum));
+                }
+                if (!ObjectUtils.isEmpty(subItemList)) {
+                    content.append("，其中").append(String.join("，", subItemList));
+                }
+            }
+            result = content.toString();
+        }
+        return result;
+    }
+
+    private Element getResponse(String wsdlUrl, QName operation, String params) {
+        Element resRootElement = null;
+        try {
+            log.info("朗新服务地址：{}", wsdlUrl);
+            log.info("请求数据：：{}", params);
+            Client client = this.getClient(wsdlUrl);
+//            QName operation = new QName("http://service.inventoryinquiry.api.serving.iscm.ls.com/", methodName);
+            Object[] objects = client.invoke(operation, params);
+            Object object = objects[0];
+            log.info("响应数据: " + object);
+            if (null != object) {
+                String result = object.toString();
+                if (result.contains("<![CDATA[")) {
+                    result = result.replaceAll("<!\\[CDATA\\[", "").replaceAll("\\]\\]>", "");
+                }
+                Document resDocument = DocumentHelper.parseText(result);
+                resRootElement = resDocument.getRootElement();
+            }
+        } catch (Exception e) {
+            log.error("调用朗新服务异常", e);
+        }
+        return resRootElement;
+    }
 
 
 //    private Client getClient() {
