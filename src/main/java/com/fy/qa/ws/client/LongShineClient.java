@@ -41,7 +41,12 @@ public class LongShineClient {
     @Value("${fy.lx.service-url}")
     private String serviceUrl;
 
-
+    /**
+     * 库存情况
+     * @param longShineCode 编码
+     * @param params 参数
+     * @return 库存数据
+     */
     public String smartApiMethod(LongShineCode longShineCode, Map<String, Object> params) {
         String result = null;
         String infoString = JsonUtils.toJsonString(params);
@@ -70,7 +75,7 @@ public class LongShineClient {
      * 库存金额
      * @param question 问题
      * @return 库存金额
-     * @throws ParamParserException
+     * @throws ParamParserException 当参数解析出错时会抛出此异常
      */
     public String inventoryAmount(String question) throws ParamParserException {
         String orgName = DataCache.getCity(question);
@@ -144,7 +149,12 @@ public class LongShineClient {
         return result;
     }
 
-
+    /**
+     * 单据签署情况统计
+     * @param question 问题
+     * @return 答案
+     * @throws ParamParserException 当参数解析出错时会抛出此异常
+     */
     public String billSign(String question) throws ParamParserException {
         String result = null;
         String orgName = DataCache.getCity(question);
@@ -193,13 +203,19 @@ public class LongShineClient {
         return result;
     }
 
+    /**
+     * 获取 webservice 响应数据（数据格式为 XML）
+     * @param wsdlUrl webservice 地址
+     * @param operation 方法
+     * @param params 参数
+     * @return 响应数据
+     */
     private Element getResponse(String wsdlUrl, QName operation, String params) {
         Element resRootElement = null;
         try {
             log.info("朗新服务地址：{}", wsdlUrl);
             log.info("请求数据：：{}", params);
             Client client = this.getClient(wsdlUrl);
-//            QName operation = new QName("http://service.inventoryinquiry.api.serving.iscm.ls.com/", methodName);
             Object[] objects = client.invoke(operation, params);
             Object object = objects[0];
             log.info("响应数据: " + object);
@@ -217,25 +233,22 @@ public class LongShineClient {
         return resRootElement;
     }
 
-
-//    private Client getClient() {
-//        if (this.client == null) {
-//            JaxWsDynamicClientFactory dynamicClientFactory = JaxWsDynamicClientFactory.newInstance();
-////            HashMap<String, Object> properties = new HashMap<>();
-////            properties.put("com.sun.xml.ws.connect.timeout", 10 * 1000);
-////            properties.put("com.sun.xml.internal.ws.connection.timeout", 10 * 1000);
-////            dynamicClientFactory.setJaxbContextProperties(properties);
-//            this.client = dynamicClientFactory.createClient(this.wsdlUrl);
-//        }
-//        return this.client;
-//    }
-
+    /**
+     * 获取 webservice 客户端
+     * @param wsdlUrl webservice 地址
+     * @return webservice 客户端
+     */
     private Client getClient(String wsdlUrl) {
         JaxWsDynamicClientFactory dynamicClientFactory = JaxWsDynamicClientFactory.newInstance();
         Client client = dynamicClientFactory.createClient(wsdlUrl);
         return client;
     }
 
+    /**
+     * 获取 XML 节点值
+     * @param element XML 节点
+     * @return XML 节点值
+     */
     private String getElementTextTrim(Element element) {
         String text = null;
         if (null != element) {
